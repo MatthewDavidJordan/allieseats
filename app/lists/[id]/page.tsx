@@ -68,40 +68,45 @@ export default async function ListDetailPage({ params }: { params: Promise<{ id:
           {/* List Items */}
           <div className="space-y-4">
             {list.items.map((item, index) => {
-              const ItemWrapper = item.slug ? Link : "div"
-              const itemProps = item.slug ? { href: `/review/${item.slug}` } : {}
-              
-              return (
-                <ItemWrapper key={index} {...itemProps} className="block">
-                  <article className={`flex items-center gap-4 p-4 rounded-xl bg-card border border-border transition-all duration-200 ${item.slug ? "hover:border-primary/40 hover:shadow-md cursor-pointer" : ""}`}>
-                    {/* Rank Number */}
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-accent flex items-center justify-center">
-                      <span className="font-serif font-semibold text-foreground">{index + 1}</span>
-                    </div>
+              const content = (
+                <article className={`flex items-center gap-4 p-4 rounded-xl bg-card border border-border transition-all duration-200 ${item.slug ? "hover:border-primary/40 hover:shadow-md cursor-pointer" : ""}`}>
+                  {/* Rank Number */}
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-accent flex items-center justify-center">
+                    <span className="font-serif font-semibold text-foreground">{index + 1}</span>
+                  </div>
 
-                    {/* Image */}
-                    <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden relative">
-                      <Image
-                        src={item.image || "/placeholder.svg"}
-                        alt={item.name}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
+                  {/* Image */}
+                  <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden relative">
+                    <Image
+                      src={item.image || "/placeholder.svg"}
+                      alt={item.name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
 
-                    {/* Info */}
-                    <div className="flex-grow min-w-0">
-                      <h3 className="font-semibold text-foreground truncate">{item.name}</h3>
-                      <p className="text-sm text-muted-foreground">{item.neighborhood}</p>
-                    </div>
+                  {/* Info */}
+                  <div className="flex-grow min-w-0">
+                    <h3 className="font-semibold text-foreground truncate">{item.name}</h3>
+                    <p className="text-sm text-muted-foreground">{item.neighborhood}</p>
+                  </div>
 
-                    {/* Rating */}
-                    <div className="flex-shrink-0 text-right">
-                      <div className="font-semibold text-foreground">{item.rating.toFixed(1)}</div>
-                      <div className="text-xs text-muted-foreground">on Beli</div>
-                    </div>
-                  </article>
-                </ItemWrapper>
+                  {/* Rating */}
+                  <div className="flex-shrink-0 text-right">
+                    <div className="font-semibold text-foreground">{item.rating.toFixed(1)}</div>
+                    <div className="text-xs text-muted-foreground">on Beli</div>
+                  </div>
+                </article>
+              )
+
+              return item.slug ? (
+                <Link key={index} href={`/review/${item.slug}`} className="block">
+                  {content}
+                </Link>
+              ) : (
+                <div key={index} className="block">
+                  {content}
+                </div>
               )
             })}
           </div>
