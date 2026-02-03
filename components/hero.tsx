@@ -7,7 +7,7 @@ export function Hero() {
         {/* Decorative elements */}
         <div className="flex justify-center mb-6">
           <a 
-            href="https://beliapp.co/alliestevens" 
+            href="https://beliapp.co/app/alliestevens" 
             target="_blank" 
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-4 py-2 rounded-full bg-accent/50 border border-primary/20 hover:bg-accent/70 transition-colors"
