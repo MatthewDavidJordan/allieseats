@@ -84,6 +84,18 @@ function normalizeOutput(parsed: any): { places: any[] } {
   return { places: [] };
 }
 
+// Guess MIME from a URL path
+function guessMimeFromUrl(url: string, hint?: string): string {
+  if (hint && (IMAGE_MIMES.has(hint) || VIDEO_MIMES.has(hint))) return hint;
+  const path = url.split("?")[0].toLowerCase();
+  if (path.endsWith(".png")) return "image/png";
+  if (path.endsWith(".webp")) return "image/webp";
+  if (path.endsWith(".mp4")) return "video/mp4";
+  if (path.endsWith(".mov")) return "video/quicktime";
+  if (path.endsWith(".webm")) return "video/webm";
+  return "image/jpeg";
+}
+
 export async function POST(req: Request) {
   try {
     if (!GEMINI_API_KEY) {
@@ -99,74 +111,125 @@ export async function POST(req: Request) {
     const contentType = req.headers.get("content-type") || "";
     console.log("POST /api/parse-beli content-type:", contentType);
 
-    if (!contentType.includes("multipart/form-data")) {
+    const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+    let mediaPart: any;
+
+    if (contentType.includes("application/json")) {
+      // ── JSON mode: { fileUrl, mimeType? } — file already in Firebase Storage ──
+      const body = await req.json();
+      const { fileUrl, mimeType: mimeHint } = body;
+
+      if (!fileUrl || typeof fileUrl !== "string") {
+        return Response.json(
+          { error: 'JSON body must include a "fileUrl" string.' },
+          { status: 400 }
+        );
+      }
+
+      console.log("fileUrl mode:", fileUrl.slice(0, 120));
+
+      const mimeType = guessMimeFromUrl(fileUrl, mimeHint);
+      console.log("resolved mimeType:", mimeType, isVideo(mimeType) ? "(video)" : "(image)");
+
+      // Fetch the file from Firebase Storage
+      const fileRes = await fetch(fileUrl);
+      if (!fileRes.ok) {
+        return Response.json(
+          { error: "Failed to fetch file from URL", status: fileRes.status },
+          { status: 502 }
+        );
+      }
+      const fileBuffer = await fileRes.arrayBuffer();
+
+      if (isVideo(mimeType)) {
+        // Upload to Gemini File API
+        console.log("Uploading video to Gemini File API...");
+        const blob = new Blob([fileBuffer], { type: mimeType });
+        const uploaded = await ai.files.upload({
+          file: blob,
+          config: { mimeType },
+        });
+        console.log("Gemini file upload complete:", uploaded.name, uploaded.uri);
+
+        let fileState = uploaded;
+        while (fileState.state === "PROCESSING") {
+          console.log("Waiting for video processing...");
+          await new Promise((r) => setTimeout(r, 2000));
+          fileState = await ai.files.get({ name: fileState.name! });
+        }
+        if (fileState.state === "FAILED") {
+          return Response.json(
+            { error: "Gemini failed to process the video file" },
+            { status: 502 }
+          );
+        }
+
+        mediaPart = createPartFromUri(fileState.uri!, fileState.mimeType!);
+      } else {
+        const base64 = Buffer.from(fileBuffer).toString("base64");
+        mediaPart = { inlineData: { mimeType, data: base64 } };
+      }
+    } else if (contentType.includes("multipart/form-data")) {
+      // ── Multipart mode: direct file upload (legacy / curl) ──
+      const formData = await req.formData();
+      console.log("formData keys:", Array.from(formData.keys()));
+
+      const file = formData.get("image") || formData.get("file");
+      if (!file || !(file instanceof File)) {
+        return Response.json(
+          { error: 'Missing file. Use form-data key "image" (or "file") and set it to File.' },
+          { status: 400 }
+        );
+      }
+
+      console.log("file metadata:", { name: file.name, type: file.type, size: file.size });
+
+      if (file.size === 0) {
+        return Response.json({ error: "Uploaded file is empty (size 0)" }, { status: 400 });
+      }
+
+      const mimeType = guessMime(file);
+      console.log("using mimeType for Gemini:", mimeType, isVideo(mimeType) ? "(video)" : "(image)");
+
+      if (isVideo(mimeType)) {
+        console.log("Uploading video to Gemini File API...");
+        const blob = new Blob([await file.arrayBuffer()], { type: mimeType });
+        const uploaded = await ai.files.upload({
+          file: blob,
+          config: { mimeType },
+        });
+        console.log("Gemini file upload complete:", uploaded.name, uploaded.uri);
+
+        let fileState = uploaded;
+        while (fileState.state === "PROCESSING") {
+          console.log("Waiting for video processing...");
+          await new Promise((r) => setTimeout(r, 2000));
+          fileState = await ai.files.get({ name: fileState.name! });
+        }
+        if (fileState.state === "FAILED") {
+          return Response.json(
+            { error: "Gemini failed to process the video file" },
+            { status: 502 }
+          );
+        }
+
+        mediaPart = createPartFromUri(fileState.uri!, fileState.mimeType!);
+      } else {
+        const arrayBuffer = await file.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString("base64");
+        mediaPart = { inlineData: { mimeType, data: base64 } };
+      }
+    } else {
       return Response.json(
         {
-          error: "Expected multipart/form-data",
+          error: "Expected application/json or multipart/form-data",
           got: contentType,
-          tip: 'In Postman: Body -> form-data, add key "image" as File.',
         },
         { status: 400 }
       );
     }
 
-    const formData = await req.formData();
-    console.log("formData keys:", Array.from(formData.keys()));
-
-    // Accept either "image" or "file" key for backward compat
-    const file = formData.get("image") || formData.get("file");
-    if (!file || !(file instanceof File)) {
-      return Response.json(
-        { error: 'Missing file. Use form-data key "image" (or "file") and set it to File.' },
-        { status: 400 }
-      );
-    }
-
-    console.log("file metadata:", { name: file.name, type: file.type, size: file.size });
-
-    if (file.size === 0) {
-      return Response.json({ error: "Uploaded file is empty (size 0)" }, { status: 400 });
-    }
-
-    const mimeType = guessMime(file);
-    console.log("using mimeType for Gemini:", mimeType, isVideo(mimeType) ? "(video)" : "(image)");
-
-    const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-
-    let mediaPart: any;
-
-    if (isVideo(mimeType)) {
-      // Use Gemini File API for videos (supports larger files)
-      console.log("Uploading video to Gemini File API...");
-      const blob = new Blob([await file.arrayBuffer()], { type: mimeType });
-      const uploaded = await ai.files.upload({
-        file: blob,
-        config: { mimeType },
-      });
-      console.log("Gemini file upload complete:", uploaded.name, uploaded.uri);
-
-      // Poll until the file is ACTIVE (video processing can take a moment)
-      let fileState = uploaded;
-      while (fileState.state === "PROCESSING") {
-        console.log("Waiting for video processing...");
-        await new Promise((r) => setTimeout(r, 2000));
-        fileState = await ai.files.get({ name: fileState.name! });
-      }
-      if (fileState.state === "FAILED") {
-        return Response.json(
-          { error: "Gemini failed to process the video file" },
-          { status: 502 }
-        );
-      }
-
-      mediaPart = createPartFromUri(fileState.uri!, fileState.mimeType!);
-    } else {
-      // Use inline base64 for images
-      const arrayBuffer = await file.arrayBuffer();
-      const base64 = Buffer.from(arrayBuffer).toString("base64");
-      mediaPart = { inlineData: { mimeType, data: base64 } };
-    }
-
+    // ── Send to Gemini ──
     const result = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: createUserContent([

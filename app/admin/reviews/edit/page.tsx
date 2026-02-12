@@ -45,6 +45,8 @@ import {
 } from "@/lib/firebase-reviews"
 import { searchBeliPlaces } from "@/lib/firebase-beli"
 import type { BeliPlace } from "@/lib/beli-types"
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
+import { storage } from "@/lib/firebase"
 
 function EditReviewPageContent() {
   const searchParams = useSearchParams()
@@ -222,17 +224,33 @@ function EditReviewPageContent() {
     }
   }
 
-  // Beli screenshot parse handler
+  // Beli screenshot/video parse handler — uploads to Firebase Storage first
   const handleBeliScreenshot = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+
     setBeliParsing(true)
     setBeliError(null)
     try {
-      const formData = new FormData()
-      formData.append("image", file)
-      const res = await fetch("/api/parse-beli", { method: "POST", body: formData })
-      const data = await res.json()
+      // Upload to Firebase Storage
+      const ext = file.name.split(".").pop() || "bin"
+      const storagePath = `beli-uploads/${Date.now()}.${ext}`
+      const storageRef = ref(storage, storagePath)
+      await uploadBytes(storageRef, file)
+      const fileUrl = await getDownloadURL(storageRef)
+
+      // Send the URL to the parse API
+      const res = await fetch("/api/parse-beli", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileUrl, mimeType: file.type || undefined }),
+      })
+      let data: any
+      try {
+        data = await res.json()
+      } catch {
+        throw new Error("Server returned an invalid response.")
+      }
       if (!res.ok) throw new Error(data.error || "Parse failed")
       const places: BeliPlace[] = (data.places || []).map((p: any) => ({
         id: "",
@@ -245,10 +263,9 @@ function EditReviewPageContent() {
       }))
       setBeliResults(places)
     } catch (err) {
-      setBeliError(err instanceof Error ? err.message : "Failed to parse screenshot")
+      setBeliError(err instanceof Error ? err.message : "Failed to parse file")
     } finally {
       setBeliParsing(false)
-      // Reset file input so the same file can be re-selected
       if (beliFileInputRef.current) beliFileInputRef.current.value = ""
     }
   }
@@ -279,7 +296,7 @@ function EditReviewPageContent() {
       <input
         ref={beliFileInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm"
+        accept="image/*,video/*"
         className="hidden"
         onChange={handleBeliScreenshot}
       />
