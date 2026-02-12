@@ -5,12 +5,16 @@ import { notFound } from "next/navigation"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { getReviewBySlug } from "@/lib/firebase-reviews"
+import { getSiteSettings } from "@/lib/firebase-settings"
 
 export const dynamic = "force-dynamic"
 
 export default async function ReviewPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const review = await getReviewBySlug(slug)
+  const [review, settings] = await Promise.all([
+    getReviewBySlug(slug),
+    getSiteSettings(),
+  ])
 
   if (!review) {
     notFound()
@@ -114,7 +118,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ slug: s
               Want to see more of my food adventures?
             </p>
             <a
-              href="https://beli.com/placeholder"
+              href={settings.beliLink}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"

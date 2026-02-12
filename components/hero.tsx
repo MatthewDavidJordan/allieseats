@@ -1,13 +1,17 @@
 import { Sparkles } from "lucide-react"
 
-export function Hero() {
+interface HeroProps {
+  beliLink?: string
+}
+
+export function Hero({ beliLink = "https://beliapp.co/app/alliestevens" }: HeroProps) {
   return (
     <section className="pt-32 pb-16 px-6 bg-background">
       <div className="max-w-4xl mx-auto text-center">
         {/* Decorative elements */}
         <div className="flex justify-center mb-6">
           <a 
-            href="https://beliapp.co/app/alliestevens" 
+            href={beliLink}
             target="_blank" 
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-4 py-2 rounded-full bg-accent/50 border border-primary/20 hover:bg-accent/70 transition-colors"

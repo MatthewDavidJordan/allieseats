@@ -4,8 +4,12 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Instagram, Mail, Heart, Utensils, Camera, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { getSiteSettings } from "@/lib/firebase-settings"
 
-export default function AboutPage() {
+export const dynamic = "force-dynamic"
+
+export default async function AboutPage() {
+  const settings = await getSiteSettings()
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -22,7 +26,7 @@ export default function AboutPage() {
               
               <div className="relative w-56 h-56 md:w-64 md:h-64 rounded-full overflow-hidden ring-4 ring-primary/20">
                 <Image
-                  src="/images/profile.jpg"
+                  src={settings.profileImage}
                   alt="Profile photo"
                   fill
                   className="object-cover"

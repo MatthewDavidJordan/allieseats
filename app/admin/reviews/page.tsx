@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Plus, Pencil, Calendar, Star, UtensilsCrossed, Loader2 } from "lucide-react"
+import { Plus, Pencil, Calendar, Star, UtensilsCrossed, Loader2, Settings } from "lucide-react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { getReviews } from "@/lib/firebase-reviews"
@@ -39,9 +39,16 @@ export default function AdminReviewsPage() {
             <h1 className="font-serif text-4xl md:text-5xl font-semibold text-foreground mb-4">
               Manage Reviews
             </h1>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto mb-4">
               Create new reviews or edit existing ones. Your culinary diary, all in one place.
             </p>
+            <Link
+              href="/admin/settings"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border text-sm text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors"
+            >
+              <Settings className="w-4 h-4" />
+              Site Settings
+            </Link>
           </div>
 
           {/* Loading state */}
