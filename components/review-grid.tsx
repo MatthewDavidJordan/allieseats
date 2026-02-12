@@ -1,10 +1,24 @@
+"use client"
+
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, Loader2 } from "lucide-react"
 import { ReviewCard } from "./review-card"
 import { Button } from "@/components/ui/button"
-import { reviews } from "@/lib/reviews-data"
+import { getLatestReviews } from "@/lib/firebase-reviews"
+import type { Review } from "@/lib/review-types"
 
 export function ReviewGrid() {
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    getLatestReviews(6)
+      .then(setReviews)
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }, [])
+
   return (
     <section id="reviews" className="py-16 px-6 bg-background">
       <div className="max-w-6xl mx-auto">
@@ -20,11 +34,18 @@ export function ReviewGrid() {
           <DoodleStar className="w-10 h-10 text-primary/40 hidden md:block" />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {reviews.slice(0, 6).map((review, index) => (
-            <ReviewCard key={index} {...review} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="w-8 h-8 text-primary animate-spin mb-4" />
+            <p className="text-muted-foreground">Loading reviews...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {reviews.map((review) => (
+              <ReviewCard key={review.slug} {...review} />
+            ))}
+          </div>
+        )}
 
         <div className="flex justify-center mt-12">
           <Button asChild variant="outline" size="lg" className="group bg-transparent">

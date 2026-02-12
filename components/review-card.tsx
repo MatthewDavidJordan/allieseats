@@ -3,20 +3,22 @@ import Link from "next/link"
 
 interface ReviewCardProps {
   image: string
-  restaurant: string
+  name?: string
+  restaurant?: string
   headline: string
   rating: number
   slug?: string
 }
 
-export function ReviewCard({ image, restaurant, headline, rating, slug }: ReviewCardProps) {
+export function ReviewCard({ image, name, restaurant, headline, rating, slug }: ReviewCardProps) {
+  const displayName = name || restaurant || ""
   const content = (
     <article className="group relative overflow-hidden rounded-2xl cursor-pointer">
       {/* Image */}
       <div className="aspect-[4/5] relative">
         <Image
           src={image || "/placeholder.svg"}
-          alt={`${restaurant} - ${headline}`}
+          alt={`${displayName} - ${headline}`}
           fill
           className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
@@ -33,7 +35,7 @@ export function ReviewCard({ image, restaurant, headline, rating, slug }: Review
         {/* Content overlay - bottom */}
         <div className="absolute bottom-0 left-0 right-0 p-5">
           <p className="text-sm font-medium text-primary-foreground/80 uppercase tracking-wider mb-1">
-            {restaurant}
+            {displayName}
           </p>
           <h3 className="font-serif text-xl md:text-2xl font-semibold text-primary-foreground leading-snug text-balance">
             {headline}

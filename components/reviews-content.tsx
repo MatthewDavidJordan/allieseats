@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { SlidersHorizontal, X } from "lucide-react"
+import { useState, useEffect, useMemo } from "react"
+import { SlidersHorizontal, X, Loader2 } from "lucide-react"
 import { ReviewCard } from "./review-card"
 import { Button } from "@/components/ui/button"
 import {
@@ -11,25 +11,69 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { reviews, cuisineTypes, neighborhoods, priceRanges } from "@/lib/reviews-data"
+import { getReviews } from "@/lib/firebase-reviews"
+import type { Review } from "@/lib/review-types"
 
 export function ReviewsContent() {
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [loading, setLoading] = useState(true)
   const [cuisineFilter, setCuisineFilter] = useState("All")
-  const [neighborhoodFilter, setNeighborhoodFilter] = useState("All")
+  const [locationFilter, setLocationFilter] = useState("All")
   const [priceFilter, setPriceFilter] = useState("All")
   const [sortBy, setSortBy] = useState("latest")
 
-  const hasActiveFilters = cuisineFilter !== "All" || neighborhoodFilter !== "All" || priceFilter !== "All"
+  useEffect(() => {
+    getReviews()
+      .then(setReviews)
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }, [])
+
+  // Derive filter options dynamically from data
+  const cuisineTypes = useMemo(() => {
+    const all = reviews.flatMap((r) => r.cuisine)
+    return ["All", ...Array.from(new Set(all)).sort()]
+  }, [reviews])
+
+  const locationOptions = useMemo(() => {
+    const all = reviews.flatMap((r) => r.location)
+    return ["All", ...Array.from(new Set(all)).sort()]
+  }, [reviews])
+
+  const priceRanges = useMemo(() => {
+    const all = reviews.map((r) => r.price).filter(Boolean)
+    return ["All", ...Array.from(new Set(all)).sort()]
+  }, [reviews])
+
+  const hasActiveFilters = cuisineFilter !== "All" || locationFilter !== "All" || priceFilter !== "All"
 
   const clearFilters = () => {
     setCuisineFilter("All")
-    setNeighborhoodFilter("All")
+    setLocationFilter("All")
     setPriceFilter("All")
   }
 
-  // Filter logic placeholder - currently shows all reviews
-  // You can add actual filtering functionality later
-  const filteredReviews = reviews
+  // Filter and sort reviews
+  const filteredReviews = useMemo(() => {
+    let result = reviews.filter((r) => {
+      if (cuisineFilter !== "All" && !r.cuisine.includes(cuisineFilter)) return false
+      if (locationFilter !== "All" && !r.location.includes(locationFilter)) return false
+      if (priceFilter !== "All" && r.price !== priceFilter) return false
+      return true
+    })
+    switch (sortBy) {
+      case "oldest":
+        result = [...result].reverse()
+        break
+      case "highest":
+        result = [...result].sort((a, b) => b.rating - a.rating)
+        break
+      case "lowest":
+        result = [...result].sort((a, b) => a.rating - b.rating)
+        break
+    }
+    return result
+  }, [reviews, cuisineFilter, locationFilter, priceFilter, sortBy])
 
   return (
     <section className="py-12 md:py-20 px-6">
@@ -43,6 +87,14 @@ export function ReviewsContent() {
             Every delicious bite, every memorable meal. Browse through all my restaurant adventures.
           </p>
         </div>
+
+        {/* Loading state */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="w-8 h-8 text-primary animate-spin mb-4" />
+            <p className="text-muted-foreground">Loading reviews...</p>
+          </div>
+        )}
 
         {/* Filters Section */}
         <div className="bg-card rounded-2xl border border-border p-6 mb-10">
@@ -80,17 +132,17 @@ export function ReviewsContent() {
               </Select>
             </div>
 
-            {/* Neighborhood Filter */}
+            {/* Location Filter */}
             <div className="space-y-2">
-              <label className="text-sm text-muted-foreground">Neighborhood</label>
-              <Select value={neighborhoodFilter} onValueChange={setNeighborhoodFilter}>
+              <label className="text-sm text-muted-foreground">Location</label>
+              <Select value={locationFilter} onValueChange={setLocationFilter}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="All Neighborhoods" />
+                  <SelectValue placeholder="All Locations" />
                 </SelectTrigger>
                 <SelectContent>
-                  {neighborhoods.map((neighborhood) => (
-                    <SelectItem key={neighborhood} value={neighborhood}>
-                      {neighborhood === "All" ? "All Neighborhoods" : neighborhood}
+                  {locationOptions.map((loc) => (
+                    <SelectItem key={loc} value={loc}>
+                      {loc === "All" ? "All Locations" : loc}
                     </SelectItem>
                   ))}
                 </SelectContent>
