@@ -143,22 +143,41 @@ Open [http://localhost:3000](http://localhost:3000) to view the site.
 
 Parses a Beli app screenshot or screen recording using Gemini AI and returns structured restaurant data. Parsed results are also automatically saved to the Beli pool in Firestore.
 
-- **Content-Type:** `multipart/form-data`
-- **Body:** Form field `image` (or `file`) containing an image (JPEG, PNG, WebP) or video (MP4, MOV, WebM)
-- **Images** are sent to Gemini as inline base64
-- **Videos** are uploaded via the Gemini File API (supports larger files, with automatic polling for processing completion)
+Supports two input modes:
 
-**Example (curl):**
+#### JSON mode (used by the admin UI)
+
+The admin UI uploads files to **Firebase Storage** first (at `beli-uploads/`), then sends the download URL. This avoids Vercel's serverless body size limit and works reliably on mobile.
+
+- **Content-Type:** `application/json`
+- **Body:** `{ "fileUrl": "https://...", "mimeType": "image/jpeg" }`
+- The API route fetches the file server-side, then sends it to Gemini
+
+**Example:**
 
 ```bash
-# Screenshot
+curl -X POST http://localhost:3000/api/parse-beli \
+  -H "Content-Type: application/json" \
+  -d '{"fileUrl": "https://firebasestorage.googleapis.com/...", "mimeType": "image/jpeg"}'
+```
+
+#### Multipart mode (for curl / Postman)
+
+- **Content-Type:** `multipart/form-data`
+- **Body:** Form field `image` (or `file`) containing an image (JPEG, PNG, WebP) or video (MP4, MOV, WebM)
+
+**Example:**
+
+```bash
 curl -X POST http://localhost:3000/api/parse-beli \
   -F "image=@beli-screenshot.png"
-
-# Video
-curl -X POST http://localhost:3000/api/parse-beli \
-  -F "image=@beli-recording.mp4"
 ```
+
+#### Processing
+
+- **Images** are sent to Gemini as inline base64
+- **Videos** are uploaded via the Gemini File API with automatic polling for processing completion
+- `maxDuration` is set to 120s to allow time for video processing
 
 **Response:**
 
@@ -227,6 +246,17 @@ The Beli integration provides two ways to import restaurant data:
 
 2. **AI Screenshot/Video Parsing** — upload a Beli app screenshot or a screen recording of scrolling through your Beli list. Gemini extracts all visible restaurants with their ratings, price levels, cuisines, and locations. For videos, it processes all frames and deduplicates entries.
 
+### Upload flow
+
+The admin UI uses a two-step upload to support large files (especially videos) on Vercel's serverless platform:
+
+1. **Client → Firebase Storage** — the file is uploaded directly from the browser to `beli-uploads/{timestamp}.{ext}`
+2. **Client → API route** — a small JSON payload `{ fileUrl, mimeType }` is sent to `/api/parse-beli`
+3. **API route → Firebase Storage** — the server fetches the file from the download URL
+4. **API route → Gemini** — the file is forwarded to Gemini for AI extraction
+
+This avoids Vercel's ~4.5MB request body limit and works reliably from mobile devices.
+
 ## Deployment
 
 The easiest way to deploy is with [Vercel](https://vercel.com):
@@ -236,7 +266,41 @@ The easiest way to deploy is with [Vercel](https://vercel.com):
 3. Add all environment variables from `.env.local` to the Vercel project settings
 4. Deploy
 
-Make sure your Firebase project's Firestore rules and Storage rules allow the necessary read/write access.
+### Firebase setup for production
+
+**Firestore rules** — ensure reads are allowed for the public site and writes for the admin:
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read: if true;
+      allow write: if true;  // Tighten with auth as needed
+    }
+  }
+}
+```
+
+**Storage CORS** — Firebase Storage requires CORS configuration for your custom domain. Create a `cors.json`:
+
+```json
+[
+  {
+    "origin": ["https://yourdomain.com", "https://www.yourdomain.com", "http://localhost:3000"],
+    "method": ["GET"],
+    "maxAgeSeconds": 3600
+  }
+]
+```
+
+Apply it with:
+
+```bash
+gsutil cors set cors.json gs://YOUR_STORAGE_BUCKET
+```
+
+**Auth domains** — if using Firebase Authentication, add your custom domain under **Firebase Console → Authentication → Settings → Authorized domains**.
 
 ## Scripts
 
