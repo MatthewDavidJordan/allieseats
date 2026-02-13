@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowLeft, Upload, Save, Loader2, ExternalLink, ImageIcon } from "lucide-react"
+import { ArrowLeft, Upload, Save, Loader2, ExternalLink, ImageIcon, LogOut } from "lucide-react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
@@ -15,8 +15,10 @@ import {
   uploadProfileImage,
 } from "@/lib/firebase-settings"
 import type { SiteSettings } from "@/lib/firebase-settings"
+import { useAuth } from "@/lib/auth-context"
 
 export default function AdminSettingsPage() {
+  const { user, signOut } = useAuth()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -213,6 +215,22 @@ export default function AdminSettingsPage() {
                       Save Settings
                     </>
                   )}
+                </Button>
+              </div>
+
+              {/* Sign Out */}
+              <div className="bg-card rounded-2xl border border-border p-6 flex items-center justify-between">
+                <div>
+                  <p className="text-base font-semibold">Sign Out</p>
+                  {user?.email && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Signed in as {user.email}
+                    </p>
+                  )}
+                </div>
+                <Button variant="outline" onClick={signOut}>
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign out
                 </Button>
               </div>
             </div>

@@ -12,6 +12,7 @@ A modern food diary and restaurant review website built with Next.js, Firebase, 
 - **Fonts:** DM Sans (body), Playfair Display (headings)
 - **Database:** [Firebase Firestore](https://firebase.google.com/docs/firestore)
 - **File Storage:** [Firebase Storage](https://firebase.google.com/docs/storage)
+- **Authentication:** [Firebase Authentication](https://firebase.google.com/docs/auth) (Google sign-in)
 - **AI:** [Google Gemini 2.5 Flash](https://ai.google.dev) via `@google/genai` SDK
 - **Analytics:** [Vercel Analytics](https://vercel.com/analytics)
 
@@ -29,9 +30,13 @@ allieseats/
 │   ├── lists/                  # Food lists (curated restaurant lists)
 │   │   └── [id]/               # Individual list detail page
 │   ├── admin/
-│   │   └── reviews/
-│   │       ├── page.tsx        # Admin reviews dashboard
-│   │       └── edit/page.tsx   # Create/edit review form + Beli import
+│   │   ├── layout.tsx          # Auth provider + admin route guard
+│   │   ├── page.tsx            # Admin sign-in page
+│   │   ├── reviews/
+│   │   │   ├── page.tsx        # Admin reviews dashboard
+│   │   │   └── edit/page.tsx   # Create/edit review form + Beli import
+│   │   └── settings/
+│   │       └── page.tsx        # Site settings (profile image, Beli link, sign out)
 │   └── api/
 │       ├── parse-beli/         # AI-powered Beli screenshot/video parser
 │       └── beli-ratings/       # Bulk upload Beli ratings to Firestore
@@ -53,8 +58,10 @@ allieseats/
 │       ├── separator.tsx
 │       └── textarea.tsx
 ├── lib/
-│   ├── firebase.ts             # Firebase app initialization
+│   ├── firebase.ts             # Firebase app initialization (Firestore, Storage, Auth)
+│   ├── auth-context.tsx        # Auth context provider (Google sign-in, email allowlist)
 │   ├── firebase-reviews.ts     # Review CRUD + image upload
+│   ├── firebase-settings.ts    # Site settings CRUD + profile image upload
 │   ├── firebase-beli.ts        # Beli ratings pool CRUD + search/match
 │   ├── review-types.ts         # Review TypeScript interface
 │   ├── beli-types.ts           # BeliPlace TypeScript interface
@@ -128,6 +135,10 @@ See [`.env.example`](.env.example) for the required variables. You'll need:
 
 - **Firebase** credentials from your [Firebase Console](https://console.firebase.google.com) project settings
 - **Gemini API key** from [Google AI Studio](https://aistudio.google.com/apikey) (for Beli screenshot/video parsing)
+- **Admin emails** — a comma-separated list of Google email addresses authorized to access the admin panel:
+  ```
+  NEXT_PUBLIC_ADMIN_EMAILS=alice@gmail.com,bob@example.com
+  ```
 
 ### 3. Run the development server
 
@@ -222,9 +233,12 @@ curl -X POST http://localhost:3000/api/beli-ratings \
 
 ## Admin Panel
 
-Navigate to `/admin/reviews` to manage reviews.
+The admin panel is protected by Firebase Authentication with a Google sign-in flow. Only email addresses listed in `NEXT_PUBLIC_ADMIN_EMAILS` are authorized.
 
-- **Review list** — view, edit, or create reviews
+- **Sign in** (`/admin`) — Google sign-in page. Unauthorized emails see an "Access Denied" message.
+- **Route guard** — all `/admin/*` routes redirect to `/admin` if the user is not authenticated and authorized.
+- **Review list** (`/admin/reviews`) — view, edit, or create reviews
+- **Site settings** (`/admin/settings`) — manage profile image, Beli link, and sign out
 - **Create/Edit form** (`/admin/reviews/edit`) — full review editor with:
   - Cover image upload (stored in Firebase Storage)
   - Tag-style inputs for cuisine, location, and order highlights
@@ -300,7 +314,10 @@ Apply it with:
 gsutil cors set cors.json gs://YOUR_STORAGE_BUCKET
 ```
 
-**Auth domains** — if using Firebase Authentication, add your custom domain under **Firebase Console → Authentication → Settings → Authorized domains**.
+**Authentication** — the admin panel uses Firebase Authentication with Google sign-in. Make sure to:
+1. Enable the **Google** sign-in provider in **Firebase Console → Authentication → Sign-in method**
+2. Add your production domain under **Firebase Console → Authentication → Settings → Authorized domains**
+3. Set `NEXT_PUBLIC_ADMIN_EMAILS` in your Vercel environment variables
 
 ## Scripts
 

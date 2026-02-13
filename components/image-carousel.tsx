@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import Image from "next/image"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 
 interface ImageCarouselProps {
   images: string[]
@@ -79,6 +80,34 @@ export function ImageCarousel({
           </div>
         ))}
       </div>
+
+      {/* Arrow navigation — hidden on mobile, visible on md+ */}
+      {count > 1 && (
+        <>
+          <button
+            onClick={() => {
+              goTo(current - 1)
+              setPaused(true)
+              setTimeout(() => setPaused(false), autoScrollInterval)
+            }}
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-10 hidden md:flex w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm items-center justify-center text-foreground hover:bg-background transition-colors shadow-sm"
+            aria-label="Previous image"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => {
+              goTo(current + 1)
+              setPaused(true)
+              setTimeout(() => setPaused(false), autoScrollInterval)
+            }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-10 hidden md:flex w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm items-center justify-center text-foreground hover:bg-background transition-colors shadow-sm"
+            aria-label="Next image"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </>
+      )}
 
       {/* Dot indicators */}
       {count > 1 && (
