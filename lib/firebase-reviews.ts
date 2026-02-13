@@ -105,3 +105,15 @@ export async function uploadReviewImage(
   const url = await getDownloadURL(storageRef)
   return url
 }
+
+export async function uploadGalleryImage(
+  file: File,
+  slug: string,
+  index: number
+): Promise<string> {
+  const extension = file.name.split(".").pop() || "jpg"
+  const path = `reviews/${slug}/gallery/${Date.now()}-${index}.${extension}`
+  const storageRef = ref(storage, path)
+  await uploadBytes(storageRef, file)
+  return getDownloadURL(storageRef)
+}

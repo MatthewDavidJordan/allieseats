@@ -19,6 +19,10 @@ const PROMPT =
   "how pricey (the number of dollar signs), the cuisine, and the location. " +
   "Deduplicate places that appear multiple times. " +
   "Cuisine and location will both be lists. " +
+  "IMPORTANT for location: if the location is a city and state/region like 'Washington, DC' or 'New York, NY', " +
+  "keep that as ONE single string in the list (e.g. [\"Northeast\", \"Washington, DC\"]), " +
+  "do NOT split it into separate items like [\"Washington\", \"DC\"]. " +
+  "Each location item should be a meaningful area, neighborhood, or 'City, State' pair. " +
   "Return ONLY JSON (no markdown, no code fences). " +
   "Use key 'price' for the dollar signs.";
 

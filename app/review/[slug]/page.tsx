@@ -4,6 +4,7 @@ import { ArrowLeft, MapPin, Calendar, ExternalLink } from "lucide-react"
 import { notFound } from "next/navigation"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
+import { ImageCarousel } from "@/components/image-carousel"
 import { getReviewBySlug } from "@/lib/firebase-reviews"
 import { getSiteSettings } from "@/lib/firebase-settings"
 
@@ -36,18 +37,27 @@ export default async function ReviewPage({ params }: { params: Promise<{ slug: s
           </Link>
         </div>
 
-        {/* Hero image */}
+        {/* Hero image / Gallery carousel */}
         <div className="max-w-5xl mx-auto px-6 mb-10">
-          <div className="relative aspect-[16/9] rounded-2xl overflow-hidden">
-            <Image
-              src={review.image || "/placeholder.svg"}
-              alt={review.headline}
-              fill
-              className="object-cover"
-              priority
-            />
+          <div className="relative">
+            {review.gallery && review.gallery.length > 0 ? (
+              <ImageCarousel
+                images={[review.image, ...review.gallery].filter(Boolean)}
+                alt={review.headline}
+              />
+            ) : (
+              <div className="relative aspect-[16/9] rounded-2xl overflow-hidden">
+                <Image
+                  src={review.image || "/placeholder.svg"}
+                  alt={review.headline}
+                  fill
+                  className="object-cover"
+                  priority
+                />
+              </div>
+            )}
             {/* Rating badge */}
-            <div className="absolute top-6 right-6 flex items-center gap-2 px-4 py-2 rounded-full bg-background/90 backdrop-blur-sm">
+            <div className="absolute top-6 right-6 z-10 flex items-center gap-2 px-4 py-2 rounded-full bg-background/90 backdrop-blur-sm">
               <span className="font-semibold text-foreground text-lg">{review.rating.toFixed(1)}</span>
               <span className="text-muted-foreground text-sm">on Beli</span>
             </div>

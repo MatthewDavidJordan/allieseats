@@ -41,6 +41,7 @@ import {
   createReview,
   updateReview,
   uploadReviewImage,
+  uploadGalleryImage,
   generateSlug,
 } from "@/lib/firebase-reviews"
 import { searchBeliPlaces } from "@/lib/firebase-beli"
@@ -79,8 +80,14 @@ function EditReviewPageContent() {
   // Content paragraphs
   const [paragraphs, setParagraphs] = useState<string[]>([""])
 
+  // Gallery state
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([])
+  const [galleryPreviews, setGalleryPreviews] = useState<string[]>([])
+  const [existingGallery, setExistingGallery] = useState<string[]>([])
+
   // Hidden file input refs
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const galleryInputRef = useRef<HTMLInputElement>(null)
   const beliFileInputRef = useRef<HTMLInputElement>(null)
 
   // Beli import state
@@ -90,6 +97,12 @@ function EditReviewPageContent() {
   const [beliLoading, setBeliLoading] = useState(false)
   const [beliParsing, setBeliParsing] = useState(false)
   const [beliError, setBeliError] = useState<string | null>(null)
+
+  // Beli filter state
+  const [beliFilterCuisine, setBeliFilterCuisine] = useState<string>("")
+  const [beliFilterLocation, setBeliFilterLocation] = useState<string>("")
+  const [beliFilterPrice, setBeliFilterPrice] = useState<string>("")
+  const [beliSortBy, setBeliSortBy] = useState<"name" | "rating">("name")
 
   // Load existing review when editing
   useEffect(() => {
@@ -111,6 +124,7 @@ function EditReviewPageContent() {
         setLocations(review.location)
         setOrderHighlights(review.orderHighlights)
         setParagraphs(review.content.length > 0 ? review.content : [""])
+        setExistingGallery(review.gallery || [])
       })
       .catch(() => setError("Failed to load review"))
       .finally(() => setLoading(false))
@@ -181,6 +195,12 @@ function EditReviewPageContent() {
         imageUrl = await uploadReviewImage(imageFile, slug)
       }
 
+      // Upload new gallery images
+      const newGalleryUrls = await Promise.all(
+        galleryFiles.map((file, i) => uploadGalleryImage(file, slug, i))
+      )
+      const gallery = [...existingGallery, ...newGalleryUrls]
+
       const reviewData = {
         name,
         headline,
@@ -190,6 +210,7 @@ function EditReviewPageContent() {
         location: locations,
         date,
         image: imageUrl,
+        gallery,
         content: paragraphs.filter((p) => p.trim()),
         orderHighlights,
         slug,
@@ -424,13 +445,90 @@ function EditReviewPageContent() {
                     <p className="text-sm text-destructive">{beliError}</p>
                   )}
 
-                  {/* Results */}
-                  {beliResults.length > 0 && (
-                    <div className="space-y-2 max-h-72 overflow-y-auto">
-                      <p className="text-xs text-muted-foreground font-medium">
-                        {beliResults.length} place{beliResults.length !== 1 && "s"} found — click to apply
-                      </p>
-                      {beliResults.map((place, i) => (
+                  {/* Filters */}
+                  {beliResults.length > 0 && (() => {
+                    const allCuisines = Array.from(new Set(beliResults.flatMap((p) => p.cuisine))).sort()
+                    const allLocations = Array.from(new Set(beliResults.flatMap((p) => p.location))).sort()
+                    const allPrices = Array.from(new Set(beliResults.map((p) => p.price).filter(Boolean))).sort((a, b) => a.length - b.length)
+
+                    const filtered = beliResults
+                      .filter((p) => !beliFilterCuisine || p.cuisine.includes(beliFilterCuisine))
+                      .filter((p) => !beliFilterLocation || p.location.includes(beliFilterLocation))
+                      .filter((p) => !beliFilterPrice || p.price === beliFilterPrice)
+                      .sort((a, b) =>
+                        beliSortBy === "rating"
+                          ? b.rating - a.rating
+                          : a.name.localeCompare(b.name)
+                      )
+
+                    const hasActiveFilter = beliFilterCuisine || beliFilterLocation || beliFilterPrice
+
+                    return (
+                      <>
+                        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 items-center">
+                          <Select value={beliFilterCuisine} onValueChange={(v) => setBeliFilterCuisine(v === "__all__" ? "" : v)}>
+                            <SelectTrigger className="h-8 text-xs w-full sm:w-[140px]">
+                              <SelectValue placeholder="All cuisines" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__all__">All cuisines</SelectItem>
+                              {allCuisines.map((c) => (
+                                <SelectItem key={c} value={c}>{c}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Select value={beliFilterLocation} onValueChange={(v) => setBeliFilterLocation(v === "__all__" ? "" : v)}>
+                            <SelectTrigger className="h-8 text-xs w-full sm:w-[150px]">
+                              <SelectValue placeholder="All locations" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__all__">All locations</SelectItem>
+                              {allLocations.map((l) => (
+                                <SelectItem key={l} value={l}>{l}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Select value={beliFilterPrice} onValueChange={(v) => setBeliFilterPrice(v === "__all__" ? "" : v)}>
+                            <SelectTrigger className="h-8 text-xs w-full sm:w-[110px]">
+                              <SelectValue placeholder="All prices" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__all__">All prices</SelectItem>
+                              {allPrices.map((p) => (
+                                <SelectItem key={p} value={p}>{p}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Select value={beliSortBy} onValueChange={(v) => setBeliSortBy(v as "name" | "rating")}>
+                            <SelectTrigger className="h-8 text-xs w-full sm:w-[120px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="name">Sort: A–Z</SelectItem>
+                              <SelectItem value="rating">Sort: Rating</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {hasActiveFilter && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setBeliFilterCuisine("")
+                                setBeliFilterLocation("")
+                                setBeliFilterPrice("")
+                              }}
+                              className="col-span-2 sm:col-span-1 text-xs text-primary hover:underline text-center sm:text-left"
+                            >
+                              Clear filters
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Results */}
+                        <div className="space-y-2 max-h-72 overflow-y-auto">
+                          <p className="text-xs text-muted-foreground font-medium">
+                            {filtered.length} of {beliResults.length} place{beliResults.length !== 1 && "s"}{hasActiveFilter ? " (filtered)" : ""} — click to apply
+                          </p>
+                          {filtered.map((place, i) => (
                         <button
                           key={place.id || i}
                           type="button"
@@ -474,9 +572,16 @@ function EditReviewPageContent() {
                             </div>
                           </div>
                         </button>
-                      ))}
-                    </div>
-                  )}
+                          ))}
+                          {filtered.length === 0 && (
+                            <p className="text-sm text-muted-foreground text-center py-3">
+                              No places match the current filters.
+                            </p>
+                          )}
+                        </div>
+                      </>
+                    )
+                  })()}
 
                   {/* Empty state */}
                   {!beliLoading && !beliParsing && beliResults.length === 0 && !beliError && (
@@ -533,6 +638,81 @@ function EditReviewPageContent() {
                   </div>
                 )}
               </button>
+            </section>
+
+            {/* ── Gallery Images ── */}
+            <section>
+              <Label className="text-base font-semibold text-foreground mb-1 block">
+                Gallery Images
+              </Label>
+              <p className="text-xs text-muted-foreground mb-3">
+                Add extra photos for the review carousel. They&apos;ll auto-scroll on the review page.
+              </p>
+
+              <input
+                ref={galleryInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files || [])
+                  if (files.length === 0) return
+                  setGalleryFiles((prev) => [...prev, ...files])
+                  const newPreviews = files.map((f) => URL.createObjectURL(f))
+                  setGalleryPreviews((prev) => [...prev, ...newPreviews])
+                  if (galleryInputRef.current) galleryInputRef.current.value = ""
+                }}
+              />
+
+              {/* Thumbnails grid */}
+              {(existingGallery.length > 0 || galleryPreviews.length > 0) && (
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 mb-4">
+                  {existingGallery.map((url, i) => (
+                    <div key={`existing-${i}`} className="relative aspect-square rounded-xl overflow-hidden border border-border group">
+                      <Image src={url} alt={`Gallery ${i + 1}`} fill className="object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setExistingGallery((prev) => prev.filter((_, idx) => idx !== i))}
+                        className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-background/90 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3.5 h-3.5 text-destructive" />
+                      </button>
+                      <div className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded bg-background/80 backdrop-blur-sm">
+                        <span className="text-[10px] font-medium text-muted-foreground">Saved</span>
+                      </div>
+                    </div>
+                  ))}
+                  {galleryPreviews.map((url, i) => (
+                    <div key={`new-${i}`} className="relative aspect-square rounded-xl overflow-hidden border border-primary/30 group">
+                      <Image src={url} alt={`New ${i + 1}`} fill className="object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setGalleryFiles((prev) => prev.filter((_, idx) => idx !== i))
+                          setGalleryPreviews((prev) => prev.filter((_, idx) => idx !== i))
+                        }}
+                        className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-background/90 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3.5 h-3.5 text-destructive" />
+                      </button>
+                      <div className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded bg-primary/80 backdrop-blur-sm">
+                        <span className="text-[10px] font-medium text-white">New</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => galleryInputRef.current?.click()}
+                className="gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add Gallery Images
+              </Button>
             </section>
 
             <Separator />
