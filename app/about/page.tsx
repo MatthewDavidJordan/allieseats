@@ -2,7 +2,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-import { Instagram, Mail, Heart, Utensils, Camera, MapPin } from "lucide-react"
+import { ExternalLink, Mail, Heart, Utensils, Camera, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { getSiteSettings } from "@/lib/firebase-settings"
 
@@ -107,13 +107,13 @@ export default async function AboutPage() {
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                   <Button asChild className="w-full sm:w-auto">
-                    <Link href="https://instagram.com/placeholder" target="_blank" rel="noopener noreferrer">
-                      <Instagram className="w-4 h-4 mr-2" />
-                      Follow Along
+                    <Link href={settings.beliLink} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Follow me on Beli
                     </Link>
                   </Button>
                   <Button asChild variant="outline" className="w-full sm:w-auto bg-transparent">
-                    <Link href="mailto:hello@bitesandbliss.com">
+                    <Link href="mailto:hello@allieseats.com">
                       <Mail className="w-4 h-4 mr-2" />
                       Say Hello
                     </Link>

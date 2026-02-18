@@ -5,6 +5,7 @@ import { notFound } from "next/navigation"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { ImageCarousel } from "@/components/image-carousel"
+import { ShareButton } from "@/components/share-button"
 import { getReviewBySlug } from "@/lib/firebase-reviews"
 import { getSiteSettings } from "@/lib/firebase-settings"
 
@@ -88,6 +89,8 @@ export default async function ReviewPage({ params }: { params: Promise<{ slug: s
                 <Calendar className="w-4 h-4" />
                 <span>{review.date}</span>
               </div>
+              <div className="h-4 w-px bg-border" />
+              <ShareButton title={review.headline} text={`${review.headline} — ${review.name}`} />
             </div>
           </div>
 

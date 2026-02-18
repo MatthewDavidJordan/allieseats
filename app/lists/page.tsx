@@ -2,6 +2,8 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { ListsGrid } from "@/components/lists-grid"
 
+export const dynamic = "force-dynamic"
+
 export const metadata = {
   title: "Lists | Allie's Eats",
   description: "Curated lists of my favorite restaurants, bars, and food spots by city and category.",

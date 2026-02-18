@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Plus, Pencil, Calendar, Star, UtensilsCrossed, Loader2, Settings } from "lucide-react"
+import { Plus, Pencil, Calendar, Star, UtensilsCrossed, Loader2, Settings, List } from "lucide-react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { getReviews } from "@/lib/firebase-reviews"
@@ -42,13 +42,22 @@ export default function AdminReviewsPage() {
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto mb-4">
               Create new reviews or edit existing ones. Your culinary diary, all in one place.
             </p>
-            <Link
-              href="/admin/settings"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border text-sm text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors"
-            >
-              <Settings className="w-4 h-4" />
-              Site Settings
-            </Link>
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              <Link
+                href="/admin/lists"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border text-sm text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors"
+              >
+                <List className="w-4 h-4" />
+                Manage Lists
+              </Link>
+              <Link
+                href="/admin/settings"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border text-sm text-muted-foreground hover:text-primary hover:border-primary/30 transition-colors"
+              >
+                <Settings className="w-4 h-4" />
+                Site Settings
+              </Link>
+            </div>
           </div>
 
           {/* Loading state */}

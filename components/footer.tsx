@@ -1,5 +1,6 @@
 import Link from "next/link"
-import { Instagram, Mail } from "lucide-react"
+import { Mail } from "lucide-react"
+import { NewsletterEmbed } from "./newsletter-embed"
 
 export function Footer() {
   return (
@@ -17,41 +18,25 @@ export function Footer() {
             </p>
           </div>
 
-          {/* Quick Links */}
+          {/* Email List */}
           <div>
-            <h4 className="font-semibold text-foreground mb-4">Quick Links</h4>
-            <nav className="flex flex-col gap-2">
-              <Link href="#reviews" className="text-muted-foreground hover:text-primary transition-colors">
-                Latest Reviews
-              </Link>
-              <Link href="#about" className="text-muted-foreground hover:text-primary transition-colors">
-                About Me
-              </Link>
-              <Link href="#contact" className="text-muted-foreground hover:text-primary transition-colors">
-                Get in Touch
-              </Link>
-            </nav>
+            <h4 className="font-semibold text-foreground mb-2">Join My Email List</h4>
+            <p className="text-sm text-muted-foreground mb-4">
+              Get notified about the latest reviews and lists — no spam, just good food.
+            </p>
+            <NewsletterEmbed />
           </div>
 
-          {/* Social / Contact */}
+          {/* Contact */}
           <div>
             <h4 className="font-semibold text-foreground mb-4">{"Let's Connect"}</h4>
-            <div className="flex items-center gap-4">
-              <a
-                href="#"
-                className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
-                aria-label="Instagram"
-              >
-                <Instagram className="w-5 h-5" />
-              </a>
-              <a
-                href="mailto:hello@bitesandbliss.com"
-                className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
-                aria-label="Email"
-              >
-                <Mail className="w-5 h-5" />
-              </a>
-            </div>
+            <a
+              href="mailto:hello@allieseats.com"
+              className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+            >
+              <Mail className="w-4 h-4" />
+              hello@allieseats.com
+            </a>
           </div>
         </div>
 
