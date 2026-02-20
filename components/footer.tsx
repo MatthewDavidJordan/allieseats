@@ -21,15 +21,12 @@ export function Footer() {
           {/* Email List */}
           <div>
             <h4 className="font-semibold text-foreground mb-2">Join My Email List</h4>
-            <p className="text-sm text-muted-foreground mb-4">
-              Get notified about the latest reviews and lists — no spam, just good food.
-            </p>
             <NewsletterEmbed />
           </div>
 
           {/* Contact */}
           <div>
-            <h4 className="font-semibold text-foreground mb-4">{"Let's Connect"}</h4>
+            <h4 className="font-semibold text-foreground mb-4">{"Contact Me"}</h4>
             <a
               href="mailto:hello@allieseats.com"
               className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"

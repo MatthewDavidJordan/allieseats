@@ -69,11 +69,6 @@ export default async function ListDetailPage({ params }: { params: Promise<{ id:
             {reviews.map((review, index) => (
               <Link key={review.id} href={`/review/${review.slug}`} className="block">
                 <article className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border transition-all duration-200 hover:border-primary/40 hover:shadow-md cursor-pointer">
-                  {/* Rank Number */}
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-accent flex items-center justify-center">
-                    <span className="font-serif font-semibold text-foreground">{index + 1}</span>
-                  </div>
-
                   {/* Image */}
                   <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden relative">
                     <Image
