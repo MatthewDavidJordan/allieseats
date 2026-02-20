@@ -8,8 +8,8 @@ const _dmSans = DM_Sans({ subsets: ["latin"] });
 const _playfair = Playfair_Display({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Allie's Eats | A Food Diary",
-  description: 'Honest restaurant reviews and delicious food photography from a passionate foodie exploring the best dining spots.',
+  title: "Allie's Eats",
+  description: 'Restaurant reviews and delicious food photography from my dining jourenys.',
   generator: 'v0.app',
   icons: {
     icon: [
