@@ -1,0 +1,51 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper: check if the authenticated user is an admin ──
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email in [
+          'mj1001571@gmail.com',
+          'mdj82@georgetown.edu',
+          'allierstevens@icloud.com',
+          'as4966@georgetown.edu'
+        ];
+    }
+
+    // ── Reviews ──
+    // Public read, admin-only write
+    match /reviews/{slug} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ── Lists ──
+    // Public read, admin-only write
+    match /lists/{listId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ── Beli Ratings Pool ──
+    // Admin-only read and write (only used in admin panel + API routes)
+    match /beli_ratings/{placeId} {
+      allow read: if true;
+      allow create, update: if isAdmin();
+    }
+
+    // ── Site Settings ──
+    // Public read (profile image & beli link shown on public pages), admin-only write
+    match /site_settings/{docId} {
+      allow read: if true;
+      allow create, update: if isAdmin();
+    }
+
+    // ── Default deny ──
+    // Any collection not explicitly matched above is denied
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

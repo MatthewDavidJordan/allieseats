@@ -282,19 +282,11 @@ The easiest way to deploy is with [Vercel](https://vercel.com):
 
 ### Firebase setup for production
 
-**Firestore rules** — ensure reads are allowed for the public site and writes for the admin:
+**Firestore & Storage rules** — the security rules live in `firestore.rules` and `storage.rules` at the project root. Both files contain a hardcoded admin email allowlist in the `isAdmin()` function. When adding a new admin:
 
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /{document=**} {
-      allow read: if true;
-      allow write: if true;  // Tighten with auth as needed
-    }
-  }
-}
-```
+1. Add their email to `NEXT_PUBLIC_ADMIN_EMAILS` in `.env.local` (and Vercel)
+2. Add their email to the `isAdmin()` list in **both** `firestore.rules` and `storage.rules`
+3. Re-deploy the rules via the Firebase Console (Firestore → Rules / Storage → Rules)
 
 **Storage CORS** — Firebase Storage requires CORS configuration for your custom domain. Create a `cors.json`:
 
