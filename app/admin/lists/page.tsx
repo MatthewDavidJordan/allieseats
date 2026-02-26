@@ -114,7 +114,7 @@ export default function AdminListsPage() {
                         {/* Count badge */}
                         <div className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background/90 backdrop-blur-sm">
                           <span className="font-semibold text-foreground text-sm">
-                            {list.reviewIds.length} spots
+                            {list.items.length} spots
                           </span>
                         </div>
                         {/* Edit overlay */}

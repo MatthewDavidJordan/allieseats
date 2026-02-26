@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, UtensilsCrossed } from "lucide-react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { getListById } from "@/lib/firebase-lists"
+import type { ListItem } from "@/lib/firebase-lists"
 import { getReviewBySlug } from "@/lib/firebase-reviews"
 import type { Review } from "@/lib/review-types"
 
@@ -33,10 +34,19 @@ export default async function ListDetailPage({ params }: { params: Promise<{ id:
     notFound()
   }
 
-  // Resolve review IDs to full review objects
-  const reviews: Review[] = (
-    await Promise.all(list.reviewIds.map((rid) => getReviewBySlug(rid)))
-  ).filter(Boolean) as Review[]
+  // Resolve review items to full review objects
+  const reviewItems = list.items.filter(
+    (i): i is { type: "review"; reviewId: string } => i.type === "review"
+  )
+  const reviewMap = new Map<string, Review>()
+  await Promise.all(
+    reviewItems.map(async (item) => {
+      const review = await getReviewBySlug(item.reviewId)
+      if (review) reviewMap.set(item.reviewId, review)
+    })
+  )
+
+  const totalItems = list.items.length
 
   return (
     <main className="min-h-screen bg-background">
@@ -60,48 +70,71 @@ export default async function ListDetailPage({ params }: { params: Promise<{ id:
               {list.description}
             </p>
             <p className="text-sm text-muted-foreground mt-4">
-              {reviews.length} {reviews.length === 1 ? "spot" : "spots"} in this list
+              {totalItems} {totalItems === 1 ? "spot" : "spots"} in this list
             </p>
           </div>
 
           {/* List Items */}
           <div className="space-y-4">
-            {reviews.map((review, index) => (
-              <Link key={review.id} href={`/review/${review.slug}`} className="block">
-                <article className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border transition-all duration-200 hover:border-primary/40 hover:shadow-md cursor-pointer">
-                  {/* Image */}
-                  <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden relative">
-                    <Image
-                      src={review.image || "/placeholder.svg"}
-                      alt={review.name}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
+            {list.items.map((item, index) => {
+              if (item.type === "review") {
+                const review = reviewMap.get(item.reviewId)
+                if (!review) return null
+                return (
+                  <Link key={`review-${item.reviewId}`} href={`/review/${review.slug}`} className="block">
+                    <article className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border transition-all duration-200 hover:border-primary/40 hover:shadow-md cursor-pointer">
+                      {/* Image */}
+                      <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden relative">
+                        <Image
+                          src={review.image || "/placeholder.svg"}
+                          alt={review.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
 
-                  {/* Info */}
-                  <div className="flex-grow min-w-0">
-                    <h3 className="font-semibold text-foreground truncate">{review.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {review.location[review.location.length - 1] || ""}
-                    </p>
-                  </div>
+                      {/* Info */}
+                      <div className="flex-grow min-w-0">
+                        <h3 className="font-semibold text-foreground truncate">{review.name}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {review.location[review.location.length - 1] || ""}
+                        </p>
+                      </div>
 
-                  {/* Rating */}
-                  <div className="flex-shrink-0 text-right">
-                    <div className="font-semibold text-foreground">{review.rating.toFixed(1)}</div>
-                    <div className="text-xs text-muted-foreground">on Beli</div>
-                  </div>
-                </article>
-              </Link>
-            ))}
+                      {/* Rating */}
+                      <div className="flex-shrink-0 text-right">
+                        <div className="font-semibold text-foreground">{review.rating.toFixed(1)}</div>
+                        <div className="text-xs text-muted-foreground">on Beli</div>
+                      </div>
+                    </article>
+                  </Link>
+                )
+              } else {
+                return (
+                  <article
+                    key={`restaurant-${index}`}
+                    className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border"
+                  >
+                    {/* Icon placeholder */}
+                    <div className="flex-shrink-0 w-16 h-16 rounded-lg bg-muted flex items-center justify-center">
+                      <UtensilsCrossed className="w-6 h-6 text-muted-foreground" />
+                    </div>
+
+                    {/* Name */}
+                    <div className="flex-grow min-w-0">
+                      <h3 className="font-semibold text-foreground truncate">{item.name}</h3>
+                    </div>
+                  </article>
+                )
+              }
+            })}
           </div>
 
           {/* Empty state */}
-          {reviews.length === 0 && (
+          {totalItems === 0 && (
             <div className="text-center py-20">
               <p className="text-muted-foreground">
-                This list doesn&apos;t have any reviews yet.
+                This list doesn&apos;t have any spots yet.
               </p>
             </div>
           )}

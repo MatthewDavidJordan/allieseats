@@ -35,6 +35,9 @@ allieseats/
 │   │   ├── reviews/
 │   │   │   ├── page.tsx        # Admin reviews dashboard
 │   │   │   └── edit/page.tsx   # Create/edit review form + Beli import
+│   │   ├── lists/
+│   │   │   ├── page.tsx        # Admin lists dashboard
+│   │   │   └── edit/page.tsx   # Create/edit list (reviews + restaurant names)
 │   │   └── settings/
 │   │       └── page.tsx        # Site settings (profile image, Beli link, sign out)
 │   └── api/
@@ -61,6 +64,7 @@ allieseats/
 │   ├── firebase.ts             # Firebase app initialization (Firestore, Storage, Auth)
 │   ├── auth-context.tsx        # Auth context provider (Google sign-in, email allowlist)
 │   ├── firebase-reviews.ts     # Review CRUD + image upload
+│   ├── firebase-lists.ts       # List CRUD + image upload (supports review & restaurant-name items)
 │   ├── firebase-settings.ts    # Site settings CRUD + profile image upload
 │   ├── firebase-beli.ts        # Beli ratings pool CRUD + search/match
 │   ├── review-types.ts         # Review TypeScript interface
@@ -94,6 +98,29 @@ Stored in the Firestore `reviews` collection, keyed by slug.
 | `content`         | `string[]` | Review paragraphs                          |
 | `orderHighlights` | `string[]` | Dishes ordered                             |
 | `slug`            | `string`   | URL-friendly ID (`{name}-{city}-{random}`) |
+
+### FoodList
+
+Stored in the Firestore `lists` collection, keyed by a generated slug.
+
+| Field        | Type         | Description                                           |
+| ------------ | ------------ | ----------------------------------------------------- |
+| `id`         | `string`     | Firestore document ID (generated slug)                |
+| `title`      | `string`     | List title                                            |
+| `description`| `string`     | Short description                                     |
+| `coverImage` | `string`     | Cover image URL (Firebase Storage)                    |
+| `items`      | `ListItem[]` | Ordered list entries (see below)                      |
+| `reviewIds`  | `string[]`   | Legacy field — auto-derived from `items` for compat   |
+| `createdAt`  | `string`     | ISO timestamp                                         |
+
+Each `ListItem` is a discriminated union:
+
+| Type           | Fields                        | Description                          |
+| -------------- | ----------------------------- | ------------------------------------ |
+| `"review"`     | `{ type, reviewId: string }`  | Links to a review document by slug   |
+| `"restaurant"` | `{ type, name: string }`      | Plain restaurant name (no review)    |
+
+Older documents that only have `reviewIds` are automatically migrated to the `items` format at read time.
 
 ### BeliPlace
 
@@ -238,6 +265,12 @@ The admin panel is protected by Firebase Authentication with a Google sign-in fl
 - **Sign in** (`/admin`) — Google sign-in page. Unauthorized emails see an "Access Denied" message.
 - **Route guard** — all `/admin/*` routes redirect to `/admin` if the user is not authenticated and authorized.
 - **Review list** (`/admin/reviews`) — view, edit, or create reviews
+- **Lists** (`/admin/lists`) — view, create, or edit curated lists
+- **Create/Edit list** (`/admin/lists/edit`) — list editor supporting:
+  - Adding restaurants by name (no review required)
+  - Selecting from existing reviews
+  - A "Current Items" summary with remove buttons
+  - Cover image upload
 - **Site settings** (`/admin/settings`) — manage profile image, Beli link, and sign out
 - **Create/Edit form** (`/admin/reviews/edit`) — full review editor with:
   - Cover image upload (stored in Firebase Storage)

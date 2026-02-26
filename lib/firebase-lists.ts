@@ -14,13 +14,28 @@ import { db, storage } from "./firebase"
 
 // ── Types ──
 
+export type ListItem =
+  | { type: "review"; reviewId: string }
+  | { type: "restaurant"; name: string }
+
 export interface FoodList {
   id: string
   title: string
   description: string
   coverImage: string
-  reviewIds: string[] // document IDs from the reviews collection
+  reviewIds: string[] // legacy – kept for backward compat
+  items: ListItem[]   // new flexible list of entries
   createdAt: string   // ISO timestamp
+}
+
+/**
+ * Normalise a Firestore document into a FoodList.
+ * Old documents that only have `reviewIds` get an auto-generated `items` array.
+ */
+function normaliseFoodList(id: string, data: Record<string, any>): FoodList {
+  const reviewIds: string[] = data.reviewIds ?? []
+  const items: ListItem[] = data.items ?? reviewIds.map((rid: string) => ({ type: "review" as const, reviewId: rid }))
+  return { ...data, id, reviewIds, items } as FoodList
 }
 
 const LISTS_COLLECTION = "lists"
@@ -56,21 +71,23 @@ export async function getLists(): Promise<FoodList[]> {
     orderBy("createdAt", "desc")
   )
   const snapshot = await getDocs(q)
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as FoodList))
+  return snapshot.docs.map((d) => normaliseFoodList(d.id, d.data()))
 }
 
 export async function getListById(id: string): Promise<FoodList | null> {
   const docRef = doc(db, LISTS_COLLECTION, id)
   const snapshot = await getDoc(docRef)
   if (!snapshot.exists()) return null
-  return { id: snapshot.id, ...snapshot.data() } as FoodList
+  return normaliseFoodList(snapshot.id, snapshot.data())
 }
 
 export async function createList(
   data: Omit<FoodList, "id">
 ): Promise<FoodList> {
   const slug = generateListSlug(data.title)
-  const listData = { ...data }
+  // Derive reviewIds from items for backward compat
+  const reviewIds = (data.items ?? []).filter((i) => i.type === "review").map((i) => (i as { type: "review"; reviewId: string }).reviewId)
+  const listData = { ...data, reviewIds }
   await setDoc(doc(db, LISTS_COLLECTION, slug), listData)
   return { id: slug, ...listData }
 }
@@ -80,6 +97,12 @@ export async function updateList(
   data: Partial<Omit<FoodList, "id">>
 ): Promise<void> {
   const docRef = doc(db, LISTS_COLLECTION, id)
+  // Keep reviewIds in sync when items are provided
+  if (data.items) {
+    data.reviewIds = data.items
+      .filter((i): i is { type: "review"; reviewId: string } => i.type === "review")
+      .map((i) => i.reviewId)
+  }
   await updateDoc(docRef, data)
 }
 

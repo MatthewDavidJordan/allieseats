@@ -1,6 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
-import { ChevronRight } from "lucide-react"
+import { ChevronRight, UtensilsCrossed } from "lucide-react"
 import { getLists } from "@/lib/firebase-lists"
 import { getReviews } from "@/lib/firebase-reviews"
 
@@ -21,10 +21,8 @@ export async function ListsGrid() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {lists.map((list) => {
-        const listReviews = list.reviewIds
-          .map((id) => reviewMap.get(id))
-          .filter(Boolean)
-        const itemCount = listReviews.length
+        const itemCount = list.items.length
+        const previewItems = list.items.slice(0, 4)
 
         return (
           <Link
@@ -63,19 +61,33 @@ export async function ListsGrid() {
                 {/* Preview of items */}
                 <div className="flex items-center justify-between">
                   <div className="flex -space-x-2">
-                    {listReviews.slice(0, 4).map((review, index) => (
-                      <div
-                        key={index}
-                        className="w-8 h-8 rounded-full border-2 border-card overflow-hidden relative"
-                      >
-                        <Image
-                          src={review!.image || "/placeholder.svg"}
-                          alt={review!.name}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    ))}
+                    {previewItems.map((item, index) => {
+                      if (item.type === "review") {
+                        const review = reviewMap.get(item.reviewId)
+                        return (
+                          <div
+                            key={index}
+                            className="w-8 h-8 rounded-full border-2 border-card overflow-hidden relative"
+                          >
+                            <Image
+                              src={review?.image || "/placeholder.svg"}
+                              alt={review?.name || "Review"}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        )
+                      } else {
+                        return (
+                          <div
+                            key={index}
+                            className="w-8 h-8 rounded-full border-2 border-card bg-muted flex items-center justify-center"
+                          >
+                            <UtensilsCrossed className="w-3.5 h-3.5 text-muted-foreground" />
+                          </div>
+                        )
+                      }
+                    })}
                     {itemCount > 4 && (
                       <div className="w-8 h-8 rounded-full border-2 border-card bg-muted flex items-center justify-center">
                         <span className="text-xs font-medium text-muted-foreground">

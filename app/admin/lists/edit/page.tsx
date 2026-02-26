@@ -13,6 +13,9 @@ import {
   ImageIcon,
   Check,
   Star,
+  X,
+  UtensilsCrossed,
+  Plus,
 } from "lucide-react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
@@ -27,6 +30,7 @@ import {
   deleteList,
   uploadListCoverImage,
 } from "@/lib/firebase-lists"
+import type { ListItem } from "@/lib/firebase-lists"
 import { getReviews } from "@/lib/firebase-reviews"
 import type { Review } from "@/lib/review-types"
 
@@ -52,7 +56,8 @@ function EditListPageContent() {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [existingImage, setExistingImage] = useState("")
-  const [selectedReviewIds, setSelectedReviewIds] = useState<string[]>([])
+  const [items, setItems] = useState<ListItem[]>([])
+  const [restaurantName, setRestaurantName] = useState("")
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -76,7 +81,7 @@ function EditListPageContent() {
         setTitle(list.title)
         setDescription(list.description)
         setExistingImage(list.coverImage)
-        setSelectedReviewIds(list.reviewIds)
+        setItems(list.items)
       })
       .catch(() => setError("Failed to load list"))
       .finally(() => setLoading(false))
@@ -91,12 +96,32 @@ function EditListPageContent() {
     reader.readAsDataURL(file)
   }
 
+  const selectedReviewIds = items
+    .filter((i): i is { type: "review"; reviewId: string } => i.type === "review")
+    .map((i) => i.reviewId)
+
   const toggleReview = (reviewId: string) => {
-    setSelectedReviewIds((prev) =>
-      prev.includes(reviewId)
-        ? prev.filter((id) => id !== reviewId)
-        : [...prev, reviewId]
+    const exists = items.some(
+      (i) => i.type === "review" && i.reviewId === reviewId
     )
+    if (exists) {
+      setItems((prev) =>
+        prev.filter((i) => !(i.type === "review" && i.reviewId === reviewId))
+      )
+    } else {
+      setItems((prev) => [...prev, { type: "review", reviewId }])
+    }
+  }
+
+  const addRestaurantName = () => {
+    const name = restaurantName.trim()
+    if (!name) return
+    setItems((prev) => [...prev, { type: "restaurant", name }])
+    setRestaurantName("")
+  }
+
+  const removeItem = (index: number) => {
+    setItems((prev) => prev.filter((_, i) => i !== index))
   }
 
   const handleSave = async () => {
@@ -119,7 +144,7 @@ function EditListPageContent() {
           title: title.trim(),
           description: description.trim(),
           coverImage,
-          reviewIds: selectedReviewIds,
+          items,
         })
       } else {
         // Create first to get the slug, then upload image
@@ -127,7 +152,8 @@ function EditListPageContent() {
           title: title.trim(),
           description: description.trim(),
           coverImage: "",
-          reviewIds: selectedReviewIds,
+          reviewIds: [],
+          items,
           createdAt: new Date().toISOString(),
         })
 
@@ -282,10 +308,42 @@ function EditListPageContent() {
               />
             </div>
 
+            {/* Add Restaurant Name */}
+            <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
+              <div>
+                <Label className="text-base font-semibold">Add a Restaurant</Label>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Add a restaurant by name without linking to a review.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  value={restaurantName}
+                  onChange={(e) => setRestaurantName(e.target.value)}
+                  placeholder="e.g. Joe's Pizza"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault()
+                      addRestaurantName()
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={addRestaurantName}
+                  disabled={!restaurantName.trim()}
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add
+                </Button>
+              </div>
+            </div>
+
             {/* Review Picker */}
             <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
               <div>
-                <Label className="text-base font-semibold">Reviews</Label>
+                <Label className="text-base font-semibold">Add from Reviews</Label>
                 <p className="text-sm text-muted-foreground mt-1">
                   Click reviews to add or remove them from this list.
                   {selectedReviewIds.length > 0 && (
@@ -361,6 +419,81 @@ function EditListPageContent() {
                 </div>
               )}
             </div>
+
+            {/* Current Items Summary */}
+            {items.length > 0 && (
+              <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
+                <div>
+                  <Label className="text-base font-semibold">Current Items</Label>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {items.length} {items.length === 1 ? "item" : "items"} in this list. Drag to reorder or click &times; to remove.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  {items.map((item, index) => {
+                    if (item.type === "review") {
+                      const review = allReviews.find((r) => r.id === item.reviewId)
+                      return (
+                        <div
+                          key={`review-${item.reviewId}`}
+                          className="flex items-center gap-3 p-3 rounded-xl border border-border bg-background"
+                        >
+                          <div className="flex-shrink-0 w-10 h-10 rounded-lg overflow-hidden relative">
+                            <Image
+                              src={review?.image || "/placeholder.svg"}
+                              alt={review?.name || "Review"}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                          <div className="flex-grow min-w-0">
+                            <p className="font-medium text-foreground text-sm truncate">
+                              {review?.name || item.reviewId}
+                            </p>
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                              <Star className="w-3 h-3 text-primary fill-primary" />
+                              <span>{review?.rating.toFixed(1) ?? "—"}</span>
+                              <span className="text-primary/60">· Review</span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeItem(index)}
+                            className="flex-shrink-0 p-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )
+                    } else {
+                      return (
+                        <div
+                          key={`restaurant-${index}`}
+                          className="flex items-center gap-3 p-3 rounded-xl border border-border bg-background"
+                        >
+                          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                            <UtensilsCrossed className="w-4 h-4 text-muted-foreground" />
+                          </div>
+                          <div className="flex-grow min-w-0">
+                            <p className="font-medium text-foreground text-sm truncate">
+                              {item.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">Restaurant</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeItem(index)}
+                            className="flex-shrink-0 p-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )
+                    }
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Actions */}
             <div className="flex items-center justify-between">
