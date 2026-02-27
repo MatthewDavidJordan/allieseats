@@ -1,6 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
-import { ChevronRight, UtensilsCrossed } from "lucide-react"
+import { ChevronRight, UtensilsCrossed, Star } from "lucide-react"
 import { getLists } from "@/lib/firebase-lists"
 import { getReviews } from "@/lib/firebase-reviews"
 
@@ -75,6 +75,15 @@ export async function ListsGrid() {
                               fill
                               className="object-cover"
                             />
+                          </div>
+                        )
+                      } else if (item.type === "beli") {
+                        return (
+                          <div
+                            key={index}
+                            className="w-8 h-8 rounded-full border-2 border-card bg-primary/10 flex items-center justify-center"
+                          >
+                            <Star className="w-3.5 h-3.5 text-primary fill-primary" />
                           </div>
                         )
                       } else {

@@ -115,10 +115,11 @@ Stored in the Firestore `lists` collection, keyed by a generated slug.
 
 Each `ListItem` is a discriminated union:
 
-| Type           | Fields                        | Description                          |
-| -------------- | ----------------------------- | ------------------------------------ |
-| `"review"`     | `{ type, reviewId: string }`  | Links to a review document by slug   |
-| `"restaurant"` | `{ type, name: string }`      | Plain restaurant name (no review)    |
+| Type           | Fields                                         | Description                          |
+| -------------- | ---------------------------------------------- | ------------------------------------ |
+| `"review"`     | `{ type, reviewId: string }`                   | Links to a review document by slug   |
+| `"restaurant"` | `{ type, name: string }`                       | Plain restaurant name (no review)    |
+| `"beli"`       | `{ type, beliId: string, name, rating }`       | Beli rating (name + score, no review)|
 
 Older documents that only have `reviewIds` are automatically migrated to the `items` format at read time.
 
@@ -269,6 +270,7 @@ The admin panel is protected by Firebase Authentication with a Google sign-in fl
 - **Create/Edit list** (`/admin/lists/edit`) — list editor supporting:
   - Adding restaurants by name (no review required)
   - Selecting from existing reviews
+  - Selecting from Beli ratings pool (with search, cuisine/location/price filters, and sort)
   - A "Current Items" summary with remove buttons
   - Cover image upload
 - **Site settings** (`/admin/settings`) — manage profile image, Beli link, and sign out

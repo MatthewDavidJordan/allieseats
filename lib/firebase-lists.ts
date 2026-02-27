@@ -17,6 +17,7 @@ import { db, storage } from "./firebase"
 export type ListItem =
   | { type: "review"; reviewId: string }
   | { type: "restaurant"; name: string }
+  | { type: "beli"; beliId: string; name: string; rating: number }
 
 export interface FoodList {
   id: string

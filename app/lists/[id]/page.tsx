@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowLeft, UtensilsCrossed } from "lucide-react"
+import { ArrowLeft, UtensilsCrossed, Star } from "lucide-react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
@@ -108,6 +108,29 @@ export default async function ListDetailPage({ params }: { params: Promise<{ id:
                       </div>
                     </article>
                   </Link>
+                )
+              } else if (item.type === "beli") {
+                return (
+                  <article
+                    key={`beli-${item.beliId}`}
+                    className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border"
+                  >
+                    {/* Icon */}
+                    <div className="flex-shrink-0 w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Star className="w-6 h-6 text-primary fill-primary" />
+                    </div>
+
+                    {/* Name */}
+                    <div className="flex-grow min-w-0">
+                      <h3 className="font-semibold text-foreground truncate">{item.name}</h3>
+                    </div>
+
+                    {/* Rating */}
+                    <div className="flex-shrink-0 text-right">
+                      <div className="font-semibold text-foreground">{item.rating.toFixed(1)}</div>
+                      <div className="text-xs text-muted-foreground">on Beli</div>
+                    </div>
+                  </article>
                 )
               } else {
                 return (
