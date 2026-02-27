@@ -14,7 +14,7 @@ A modern food diary and restaurant review website built with Next.js, Firebase, 
 - **File Storage:** [Firebase Storage](https://firebase.google.com/docs/storage)
 - **Authentication:** [Firebase Authentication](https://firebase.google.com/docs/auth) (Google sign-in)
 - **AI:** [Google Gemini 2.5 Flash](https://ai.google.dev) via `@google/genai` SDK
-- **Analytics:** [Vercel Analytics](https://vercel.com/analytics)
+- **Analytics:** [Vercel Analytics](https://vercel.com/analytics), [Firebase Analytics](https://firebase.google.com/docs/analytics)
 
 ## Project Structure
 
@@ -51,6 +51,7 @@ allieseats/
 │   ├── review-grid.tsx         # Latest reviews grid (home page)
 │   ├── reviews-content.tsx     # Reviews list with filtering/sorting
 │   ├── lists-grid.tsx          # Food lists grid
+│   ├── firebase-analytics.tsx  # Firebase Analytics (page view tracking on route changes)
 │   ├── loading.tsx             # Loading skeleton
 │   └── ui/                     # shadcn/ui primitives
 │       ├── badge.tsx
@@ -61,7 +62,7 @@ allieseats/
 │       ├── separator.tsx
 │       └── textarea.tsx
 ├── lib/
-│   ├── firebase.ts             # Firebase app initialization (Firestore, Storage, Auth)
+│   ├── firebase.ts             # Firebase app initialization (Firestore, Storage, Auth, Analytics)
 │   ├── auth-context.tsx        # Auth context provider (Google sign-in, email allowlist)
 │   ├── firebase-reviews.ts     # Review CRUD + image upload
 │   ├── firebase-lists.ts       # List CRUD + image upload (supports review & restaurant-name items)
@@ -161,7 +162,7 @@ cp .env.example .env.local
 
 See [`.env.example`](.env.example) for the required variables. You'll need:
 
-- **Firebase** credentials from your [Firebase Console](https://console.firebase.google.com) project settings
+- **Firebase** credentials from your [Firebase Console](https://console.firebase.google.com) project settings (including `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` for Analytics)
 - **Gemini API key** from [Google AI Studio](https://aistudio.google.com/apikey) (for Beli screenshot/video parsing)
 - **Admin emails** — a comma-separated list of Google email addresses authorized to access the admin panel:
   ```

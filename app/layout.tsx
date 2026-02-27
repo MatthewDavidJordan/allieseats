@@ -2,6 +2,7 @@ import React from "react"
 import type { Metadata } from 'next'
 import { DM_Sans, Playfair_Display } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { FirebaseAnalytics } from '@/components/firebase-analytics'
 import './globals.css'
 
 const _dmSans = DM_Sans({ subsets: ["latin"] });
@@ -40,6 +41,7 @@ export default function RootLayout({
       <body className={`font-sans antialiased`}>
         {children}
         <Analytics />
+        <FirebaseAnalytics />
       </body>
     </html>
   )
