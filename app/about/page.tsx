@@ -77,7 +77,7 @@ export default async function AboutPage() {
               </div>
 
               {/* Fun Facts */}
-              <div className="mt-10 pt-8 border-t border-border">
+              {/* <div className="mt-10 pt-8 border-t border-border">
                 <h2 className="font-serif text-xl font-semibold text-foreground mb-6 text-center">
                   A few fun facts
                 </h2>
@@ -98,7 +98,7 @@ export default async function AboutPage() {
                     <span className="text-xs text-muted-foreground">always hunting gems</span>
                   </div>
                 </div>
-              </div>
+              </div> */}
 
               {/* CTA */}
               <div className="mt-10 pt-8 border-t border-border text-center">
