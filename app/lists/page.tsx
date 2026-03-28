@@ -21,8 +21,7 @@ export default function ListsPage() {
               My Lists
             </h1>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto text-pretty">
-              Curated collections of my favorite spots, organized by city and vibe. 
-              Perfect for when you need a rec!
+              Curated collections of my favorite spots. Perfect for when you need a rec!
             </p>
           </div>
 

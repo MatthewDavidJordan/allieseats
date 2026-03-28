@@ -47,7 +47,7 @@ export default async function AboutPage() {
             <div className="text-center md:text-left">
               <p className="text-primary font-medium mb-2">Hey there!</p>
               <h1 className="font-serif text-4xl md:text-5xl font-semibold text-foreground mb-4 text-balance">
-                {"I'm the girl behind the bites"}
+                {"I'm Allie"}
               </h1>
               <p className="text-lg text-muted-foreground leading-relaxed">
                 Welcome to my little corner of the internet where I share all my favorite food finds.
@@ -60,19 +60,19 @@ export default async function AboutPage() {
             <div className="bg-card rounded-3xl p-8 md:p-10 border border-border shadow-sm">
               <div className="prose prose-lg max-w-none">
                 <p className="text-foreground leading-relaxed mb-6">
-                  {"If there's one thing you should know about me, it's that I take my food very seriously (and by seriously, I mean I will absolutely make everyone wait to eat while I get the perfect photo)."}
+                  {"Hi, I’m Allie, and welcome to Allie’s Eats!"}
                 </p>
                 
                 <p className="text-foreground leading-relaxed mb-6">
-                  {"This blog started as a way to keep track of all the amazing restaurants I've been to—because let's be honest, my notes app was getting out of control. Now it's become my favorite creative outlet where I get to share honest reviews, pretty food pics, and hopefully help you find your next favorite spot."}
+                  {"One of my favorite questions to be asked is, “Where should I go out to eat?” This blog is my way of answering that question. Going out to eat and trying new foods is one of my favorite things to do, and I love sharing those experiences with my friends and anyone else who’s looking for a good recommendation."}
                 </p>
 
                 <p className="text-foreground leading-relaxed mb-6">
-                  {"I'm all about cozy brunch spots, hidden gems, and anywhere with good lighting (for the photos, obviously). I believe every meal is an experience, and I'm here to document the delicious ones."}
+                  {"I’m a 22-year-old college student living in Washington, DC, and I’ll be graduating soon and moving to New York City this fall. You’ll probably notice some familiar faces throughout my reviews, so here’s a quick introduction. My most frequent dining partner is my boyfriend, Matt, who’s always down to try something new and is the best restaurant date I could ask for. My love for food comes from my parents, Missy and Luke, and is shared by my sister, Lucy, who will all definitely make appearances here. I also have a few foodie friends you might meet along the way: Jordan, Alice, Beatrice, Margot and more!"}
                 </p>
 
                 <p className="text-foreground leading-relaxed">
-                  {"When I'm not eating my way through the city, you can find me planning my next food adventure or convincing my friends to try \"just one more place.\""}
+                  {"Check out my thoughts on restaurants in DC, NYC, and beyond!"}
                 </p>
               </div>
 

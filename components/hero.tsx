@@ -8,8 +8,19 @@ export function Hero({ beliLink = "https://beliapp.co/app/alliestevens" }: HeroP
   return (
     <section className="pt-32 pb-16 px-6 bg-background">
       <div className="max-w-4xl mx-auto text-center">
+        <h1 className="font-serif text-4xl md:text-6xl lg:text-7xl font-semibold text-foreground leading-tight mb-6 text-balance">
+          So...
+          <br />
+          <span className="text-primary italic">Where Should We Eat?</span>
+        </h1>
+
+        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-8">
+          Join me on my culinary adventures as I explore restaurants, share what I like (and what I don't), 
+          and capture the beauty of delicious food through my lens.
+        </p>
+
         {/* Decorative elements */}
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center mb-4">
           <a 
             href={beliLink}
             target="_blank" 
@@ -20,17 +31,6 @@ export function Hero({ beliLink = "https://beliapp.co/app/alliestevens" }: HeroP
             <span className="text-sm font-medium text-primary">My Beli</span>
           </a>
         </div>
-
-        <h1 className="font-serif text-4xl md:text-6xl lg:text-7xl font-semibold text-foreground leading-tight mb-6 text-balance">
-          Savoring Every Bite,
-          <br />
-          <span className="text-primary italic">One Review at a Time</span>
-        </h1>
-
-        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-8">
-          Join me on my culinary adventures as I explore restaurants, share honest reviews, 
-          and capture the beauty of delicious food through my lens.
-        </p>
 
         {/* Decorative doodle-style elements */}
         <div className="flex justify-center items-center gap-6 text-primary/60">

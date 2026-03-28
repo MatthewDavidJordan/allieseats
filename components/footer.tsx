@@ -13,8 +13,7 @@ export function Footer() {
               Allie's Eats
             </h3>
             <p className="text-muted-foreground leading-relaxed">
-              Exploring delicious food, one restaurant at a time. Honest reviews, beautiful photos, 
-              and a whole lot of love for great dining experiences.
+              A collection of restaurants I've tried, what I ordered, and what I'd recommend.
             </p>
           </div>
 
